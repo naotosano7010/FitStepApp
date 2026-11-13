@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FitStep - 無理なく続くダイエット＆散歩コース自動作成</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans JP"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        input, select, textarea {
+            font-size: 16px !important; /* スマホ自動ズーム防止 */
+        }
+        @media (min-width: 640px) {
+            input, select, textarea {
+                font-size: 0.75rem !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased selection:bg-brand-500 selection:text-white pb-16">
+
+    <!-- カスタム通知トースト（alertの代替） -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-slate-800 text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-3 text-sm font-medium">
+            <i id="toast-icon" class="fa-solid fa-circle-check text-brand-500 text-lg"></i>
+            <span id="toast-message">通知メッセージ</span>
+        </div>
+    </div>
+
+    <!-- ヘッダー -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <div class="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center shadow-sm">
+                    <i class="fa-solid fa-person-walking text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg text-slate-900 leading-tight">FitStep</h1>
+                    <p class="text-xs text-slate-500">運動再開・無理なく続くダイエット支援</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="openInstallModal()" class="inline-flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-200 shadow-sm transition active:scale-95">
+                    <i class="fa-solid fa-mobile-screen"></i> <span class="hidden sm:inline">アプリ化</span>
+                </button>
+                <button type="button" onclick="openShareModal()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-900 text-white shadow-sm transition active:scale-95">
+                    <i class="fa-solid fa-share-nodes"></i> <span class="hidden sm:inline">友達にシェア</span><span class="sm:hidden">共有</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- スマホアプリ化（ホーム画面追加）案内モーダル -->
+    <div id="install-modal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-xl border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-base text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-mobile-screen-button text-brand-600"></i> スマホのホーム画面に追加する
+                </h3>
+                <button type="button" onclick="closeInstallModal()" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="space-y-3 text-xs text-slate-600 leading-relaxed">
+                <p class="font-bold text-slate-800">スマホでお使いのブラウザから、ホーム画面にアイコンを追加すると通常のアプリのように全画面で快適に使えます！</p>
+                
+                <div class="bg-brand-50 border border-brand-200 rounded-xl p-3.5 space-y-2">
+                    <p class="font-bold text-brand-800"><i class="fa-brands fa-apple mr-1 text-sm"></i> iPhone（Safari）の場合</p>
+                    <p>1. 画面下部（または上部）のシェアボタン <i class="fa-solid fa-arrow-up-from-bracket inline"></i> をタップ</p>
+                    <p>2. メニューから下へスクロールし、<strong>「ホーム画面に追加」</strong>をタップ</p>
+                    <p>3. 右上の「追加」を押せば完了！</p>
+                </div>
+
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2">
+                    <p class="font-bold text-slate-800"><i class="fa-brands fa-android mr-1 text-sm"></i> Android（Chrome）の場合</p>
+                    <p>1. 画面右上（またはメニュー内）の縦三点リーダー <i class="fa-solid fa-ellipsis-vertical inline"></i> をタップ</p>
+                    <p>2. メニューから<strong>「ホーム画面に追加」</strong>または<strong>「アプリをインストール」</strong>を選択</p>
+                    <p>3. 画面の指示に従って追加すれば完了！</p>
+                </div>
+            </div>
+            <div class="pt-2">
+                <button type="button" onclick="closeInstallModal()" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl transition">
+                    閉じる
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 友達共有・引き継ぎモーダル -->
+    <div id="share-modal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-xl border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-base text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-share-nodes text-brand-600"></i> お友達とスポットをシェアする
+                </h3>
+                <button type="button" onclick="closeShareModal()" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="space-y-3 text-xs text-slate-600 leading-relaxed">
+                <p>このアプリのURLをLINEやメッセージでお友達に送ることで、お友達もそれぞれのスマホでご利用いただけます。</p>
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                    <p class="font-bold text-slate-700">1. 登録した散歩スポットをコードで送る</p>
+                    <button type="button" onclick="copySpotsShareText()" class="w-full py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-lg transition text-xs">
+                        <i class="fa-solid fa-copy mr-1"></i> スポット一覧をコピーする
+                    </button>
+                </div>
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                    <p class="font-bold text-slate-700">2. お友達から受け取ったスポットを取り込む</p>
+                    <textarea id="import-spots-input" rows="2" placeholder="ここに受け取ったテキストを貼り付け..." class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+                    <button type="button" onclick="importSpotsFromText()" class="w-full py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-lg transition text-xs">
+                        <i class="fa-solid fa-file-arrow-down mr-1"></i> スポットを取り込む
+                    </button>
+                </div>
+            </div>
+            <div class="pt-2">
+                <button type="button" onclick="closeShareModal()" class="w-full py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition">
+                    閉じる
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- メインナビゲーションタブ（スマホでも操作しやすい固定追従バー） -->
+    <nav class="bg-white border-b border-slate-200 sticky top-[73px] z-20 shadow-xs">
+        <div class="max-w-4xl mx-auto px-4 py-2 flex gap-2">
+            <button type="button" id="tab-btn-home" onclick="switchTab('home')" class="flex-1 py-3 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 bg-white text-brand-700 shadow-sm transition border border-brand-200">
+                <i class="fa-solid fa-house-chimney text-brand-600"></i> 自宅で運動
+            </button>
+            <button type="button" id="tab-btn-walk" onclick="switchTab('walk')" class="flex-1 py-3 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900 transition border border-transparent">
+                <i class="fa-solid fa-map-location-dot text-brand-600"></i> 散歩コース自動作成
+            </button>
+        </div>
+    </nav>
+
+    <main class="max-w-4xl mx-auto px-4 py-6 space-y-6">
+
+        <!-- パーソナル設定サマリーカード（全タブ共通） -->
+        <section class="bg-white rounded-2xl p-5 shadow-xs border border-slate-200 space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-sm">
+                        <i class="fa-solid fa-user-gear"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-sm text-slate-900">あなたのパーソナル設定</h2>
+                        <p class="text-[11px] text-slate-500">体格や目的に合わせてメニューと歩行ルートを自動最適化します</p>
+                    </div>
+                </div>
+                <button type="button" onclick="toggleProfileEdit()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1">
+                    <i class="fa-solid fa-pen-to-square"></i> 体重・目標を更新
+                </button>
+            </div>
+
+            <!-- ステータス一覧グリッド -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <span class="block text-[11px] text-slate-500 mb-0.5">性別・身長</span>
+                    <span class="font-bold text-sm sm:text-base text-slate-800"><span id="disp-gender">男性</span> / <span id="disp-height">174</span>cm</span>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <span class="block text-[11px] text-slate-500 mb-0.5">現在の体重</span>
+                    <span class="font-bold text-sm sm:text-base text-brand-700"><span id="disp-weight">77.0</span> kg</span>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <span class="block text-[11px] text-slate-500 mb-0.5">目標の体重</span>
+                    <span class="font-bold text-sm sm:text-base text-slate-800"><span id="disp-target">72.0</span> kg</span>
+                </div>
+                <div class="bg-brand-50/60 p-3 rounded-xl border border-brand-100">
+                    <span class="block text-[11px] text-brand-700 mb-0.5">現在のBMI</span>
+                    <span id="disp-bmi" class="font-bold text-sm sm:text-base text-brand-800">25.4</span>
+                    <span id="disp-bmi-status" class="block text-[10px] text-brand-600 mt-0.5 font-medium">標準まであと -2.5kg</span>
+                </div>
+            </div>
+
+            <!-- 折りたたみ式：プロフィール編集フォーム -->
+            <div id="profile-edit-box" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+                <h4 class="font-bold text-xs text-slate-700 flex items-center gap-1.5">
+                    <i class="fa-solid fa-sliders text-brand-600"></i> プロフィール・目標値の編集
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 mb-1">性別</label>
+                        <select id="input-gender" class="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="男性">男性</option>
+                            <option value="女性">女性</option>
+                            <option value="その他">その他</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 mb-1">身長 (cm)</label>
+                        <input type="number" id="input-height" step="0.5" class="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 mb-1">現在の体重 (kg)</label>
+                        <input type="number" id="input-weight" step="0.1" class="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 mb-1">目標の体重 (kg)</label>
+                        <input type="number" id="input-target" step="0.1" class="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-1">
+                    <button type="button" onclick="toggleProfileEdit()" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 hover:bg-slate-300 text-slate-700 transition">
+                        キャンセル
+                    </button>
+                    <button type="button" onclick="saveProfile()" class="px-4 py-2 rounded-xl text-xs font-bold bg-brand-600 hover:bg-brand-700 text-white shadow-sm transition">
+                        保存してメニューを再計算
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- [TAB 1] 自宅で運動セクション -->
+        <section id="section-home" class="space-y-6">
+            <!-- レベル・条件選択パネル -->
+            <div class="bg-white rounded-2xl p-5 shadow-xs border border-slate-200 space-y-4">
+                <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
+                    <div class="w-8 h-8 rounded-lg bg-brand-600 text-white flex items-center justify-center font-bold text-sm">
+                        <i class="fa-solid fa-dumbbell"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-sm text-slate-900">自宅トレーニングメニュー自動生成</h3>
+                        <p class="text-[11px] text-slate-500">久しぶりの運動再開でも関節を痛めず無理なく続けられる内容を選定します</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <label class="relative flex items-start p-3.5 rounded-xl border border-brand-200 bg-brand-50/50 cursor-pointer hover:bg-brand-50 transition">
+                        <input type="radio" name="workout-level" value="beginner" checked onchange="generateHomeWorkout()" class="mt-0.5 text-brand-600 focus:ring-brand-500">
+                        <span class="ml-2.5">
+                            <span class="block font-bold text-xs text-slate-900">Lv.1 超入門・運動再開期</span>
+                            <span class="block text-[11px] text-slate-600 mt-0.5">運動不足解消・ストレッチ中心（約10分）</span>
+                        </span>
+                    </label>
+                    <label class="relative flex items-start p-3.5 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer hover:bg-slate-100 transition">
+                        <input type="radio" name="workout-level" value="light" onchange="generateHomeWorkout()" class="mt-0.5 text-brand-600 focus:ring-brand-500">
+                        <span class="ml-2.5">
+                            <span class="block font-bold text-xs text-slate-900">Lv.2 慣らし・脂肪燃焼期</span>
+                            <span class="block text-[11px] text-slate-600 mt-0.5">少しずつ体を慣らす代謝アップ（約15分）</span>
+                        </span>
+                    </label>
+                    <label class="relative flex items-start p-3.5 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer hover:bg-slate-100 transition">
+                        <input type="radio" name="workout-level" value="active" onchange="generateHomeWorkout()" class="mt-0.5 text-brand-600 focus:ring-brand-500">
+                        <span class="ml-2.5">
+                            <span class="block font-bold text-xs text-slate-900">Lv.3 しっかり引き締め期</span>
+                            <span class="block text-[11px] text-slate-600 mt-0.5">全身をしっかり動かす本格メニュー（約20分）</span>
+                        </span>
+                    </label>
+                </div>
+
+                <!-- 関節への配慮・チェックボックス -->
+                <div class="flex flex-wrap items-center gap-4 pt-1 border-t border-slate-100 text-xs">
+                    <span class="font-bold text-slate-700">関節・身体への配慮：</span>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="opt-no-knee" checked onchange="generateHomeWorkout()" class="rounded text-brand-600 focus:ring-brand-500 w-4 h-4">
+                        <span class="font-medium text-slate-700">膝への負担を軽減（深い屈伸を除外）</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="opt-no-jump" checked onchange="generateHomeWorkout()" class="rounded text-brand-600 focus:ring-brand-500 w-4 h-4">
+                        <span class="font-medium text-slate-700">ジャンプなし（足音・衝撃配慮）</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- エクササイズタイマー補助ツール -->
+            <div class="bg-slate-900 text-white rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="space-y-1 text-center sm:text-left">
+                    <span class="text-xs font-bold text-brand-400 uppercase tracking-wider">Exercise Timer</span>
+                    <h4 class="font-bold text-base">インターバル・タイマー</h4>
+                    <p class="text-xs text-slate-400">各メニューの実践や休憩の計測にワンタップで使えます</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span id="timer-display" class="font-mono text-3xl font-bold tracking-wider text-brand-400 bg-slate-800 px-4 py-2 rounded-xl border border-slate-700">00:30</span>
+                    <div class="flex flex-col gap-1.5">
+                        <div class="flex gap-1.5">
+                            <button type="button" onclick="startTimer(30)" class="px-3 py-1 bg-brand-600 hover:bg-brand-500 font-bold text-xs rounded-lg transition">30秒</button>
+                            <button type="button" onclick="startTimer(60)" class="px-3 py-1 bg-brand-600 hover:bg-brand-500 font-bold text-xs rounded-lg transition">60秒</button>
+                        </div>
+                        <button type="button" onclick="resetTimer()" class="px-3 py-1 bg-slate-700 hover:bg-slate-600 font-bold text-xs rounded-lg transition text-slate-300">リセット</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 生成された運動メニュー結果 -->
+            <div class="bg-white rounded-2xl p-5 shadow-xs border border-slate-200 space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                    <div>
+                        <h4 id="workout-title" class="font-bold text-base text-slate-900">Lv.1 運動再開・ほぐし＆基礎代謝メニュー</h4>
+                        <p class="text-xs text-slate-500">無理のない範囲でゆっくり呼吸を止めずに行いましょう</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs bg-brand-50 text-brand-700 border border-brand-200 font-bold px-3 py-1.5 rounded-xl">
+                            目安時間: 約<span id="workout-time">10</span>分
+                        </span>
+                        <span class="text-xs bg-amber-50 text-amber-700 border border-amber-200 font-bold px-3 py-1.5 rounded-xl">
+                            消費カロリー: 約<span id="workout-kcal">45</span> kcal
+                        </span>
+                    </div>
+                </div>
+
+                <!-- メニューリスト -->
+                <div id="workout-list" class="space-y-3">
+                    <!-- JavaScriptで動的生成 -->
+                </div>
+
+                <div class="pt-2">
+                    <button type="button" onclick="generateHomeWorkout()" class="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition text-xs flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-rotate"></i> 別のメニュー構成に変える（再生成）
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- [TAB 2] 散歩コース自動作成セクション -->
+        <section id="section-walk" class="hidden space-y-6">
+            <!-- 出発地点の登録パネル -->
+            <div class="bg-white rounded-2xl p-5 shadow-xs border border-slate-200 space-y-4">
+                <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
+                    <div class="w-8 h-8 rounded-lg bg-brand-600 text-white flex items-center justify-center font-bold text-sm">
+                        <i class="fa-solid fa-location-crosshairs"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-sm text-slate-900">出発・ゴール地点の設定</h3>
+                        <p class="text-[11px] text-slate-500">ご自宅や最寄り駅など、散歩のスタート＆ゴール地点を設定します</p>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <input type="text" id="start-point-input" placeholder="例: 自宅マンション名、〇〇駅東口、近くのコンビニ等" class="flex-1 px-4 py-2.5 bg-slate-50 rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <button type="button" onclick="saveStartPoint()" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl transition text-xs flex items-center justify-center gap-1.5 shrink-0">
+                            <i class="fa-solid fa-floppy-disk"></i> 出発地点を保存
+                        </button>
+                    </div>
+                    <p class="text-[11px] text-slate-500">現在設定中の出発地点：<strong id="disp-start-point" class="text-slate-800">未設定</strong></p>
+                </div>
+            </div>
+
+            <!-- スポット登録管理パネル -->
+            <div class="bg-white rounded-2xl p-5 shadow-xs border border-slate-200 space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-lg bg-brand-600 text-white flex items-center justify-center font-bold text-sm">
+                            <i class="fa-solid fa-map-pin"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-sm text-slate-900">お気に入りの散歩スポット登録</h3>
+                            <p class="text-[11px] text-slate-500">よく行く場所や気になるスポットを登録すると、組み合わせた周回コースが作れます</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="resetDefaultSpots()" class="text-xs text-brand-700 hover:text-brand-800 font-bold bg-brand-50 px-3 py-1.5 rounded-xl border border-brand-200 transition">
+                        <i class="fa-solid fa-rotate-left mr-1"></i> サンプル地点を復元
+                    </button>
+                </div>
+
+                <!-- スポット追加フォーム -->
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div class="sm:col-span-5">
+                        <label class="block text-[11px] font-bold text-slate-600 mb-1">地点名・目印</label>
+                        <input type="text" id="spot-name" placeholder="例: 〇〇公園の大きな木、川沿いのベンチ等" class="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div class="sm:col-span-3">
+                        <label class="block text-[11px] font-bold text-slate-600 mb-1">カテゴリ</label>
+                        <select id="spot-category" class="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="公園・緑地">公園・緑地</option>
+                            <option value="水辺・川沿い">水辺・川沿い</option>
+                            <option value="お店・カフェ">お店・カフェ</option>
+                            <option value="神社・史跡">神社・史跡</option>
+                            <option value="坂道・階段">坂道・階段</option>
+                        </select>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-[11px] font-bold text-slate-600 mb-1">片道の目安</label>
+                        <select id="spot-distance" class="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="5">片道 5分</option>
+                            <option value="10" selected>片道 10分</option>
+                            <option value="15">片道 15分</option>
+                            <option value="20">片道 20分</option>
+                            <option value="30">片道 30分</option>
+                        </select>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <button type="button" onclick="addSpot()" class="w-full py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl transition text-xs shadow-sm flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-plus"></i> 追加する
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 登録済みスポット一覧（バッジ形式） -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <h4 class="font-bold text-xs text-slate-700">登録済みスポット一覧（<span id="spot-count">0</span>件）</h4>
+                        <span class="text-[11px] text-slate-400">×マークで削除できます</span>
+                    </div>
+                    <div id="spot-list" class="flex flex-wrap gap-2 pt-1">
+                        <!-- JavaScriptで動的生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- コース自動生成条件パネル -->
+            <div class="bg-white rounded-2xl p-5 shadow-xs border border-slate-200 space-y-4">
+                <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
+                    <div class="w-8 h-8 rounded-lg bg-brand-600 text-white flex items-center justify-center font-bold text-sm">
+                        <i class="fa-solid fa-route"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-sm text-slate-900">散歩コース自動作成条件</h3>
+                        <p class="text-[11px] text-slate-500">「出発地点から出発地点へ戻るまで」の目標時間と気分に合わせた周回ルートを自動構築します</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">目標の完歩時間（往復・周回合計）</label>
+                        <select id="walk-duration-target" class="w-full px-3 py-2.5 bg-slate-50 rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="20">20分完歩（軽めのリフレッシュ）</option>
+                            <option value="30" selected>30分完歩（王道・脂肪燃焼おすすめ）</option>
+                            <option value="45">45分完歩（しっかり有酸素運動）</option>
+                            <option value="60">60分完歩（休日のたっぷり散歩）</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">今日の気分・目的</label>
+                        <select id="walk-mood" class="w-full px-3 py-2.5 bg-slate-50 rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="any">おまかせバランスコース</option>
+                            <option value="relax">自然・緑地でのんびりリフレッシュ</option>
+                            <option value="reward">お店やカフェへ立ち寄りコース</option>
+                            <option value="burn">少し坂道や距離を歩いてしっかり燃焼</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="button" onclick="generateWalkCourse()" class="w-full py-3.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow-sm transition text-xs flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles text-sm"></i> 登録地点から出発して戻る散歩コースを自動作成する
+                    </button>
+                </div>
+            </div>
+
+            <!-- 自動作成された散歩コース結果表示 -->
+            <div class="bg-white rounded-2xl p-5 shadow-xs border border-slate-200 space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                    <div>
+                        <h4 id="walk-course-title" class="font-bold text-base text-slate-900">出発地点へ戻る！30分完歩おまかせ周回コース</h4>
+                        <p class="text-xs text-slate-500">登録された地点の中から、往復・周回でちょうど完歩できる最適なルートです</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-xs bg-brand-50 text-brand-700 border border-brand-200 font-bold px-3 py-1.5 rounded-xl">
+                            合計目安: 約<span id="walk-total-min">30</span>分
+                        </span>
+                        <span class="text-xs bg-slate-100 text-slate-700 border border-slate-200 font-bold px-3 py-1.5 rounded-xl">
+                            歩数: 約<span id="walk-total-steps">3,000</span>歩
+                        </span>
+                        <span class="text-xs bg-amber-50 text-amber-700 border border-amber-200 font-bold px-3 py-1.5 rounded-xl">
+                            消費カロリー: 約<span id="walk-total-kcal">115</span> kcal
+                        </span>
+                    </div>
+                </div>
+
+                <!-- タイムライン表示（出発地点 → 経由スポット → 出発地点） -->
+                <div id="walk-timeline" class="pl-6 border-l-2 border-brand-500 space-y-6 my-4 py-2">
+                    <!-- JavaScriptで動的生成 -->
+                </div>
+
+                <!-- Googleマップでルートを開くアクション -->
+                <div class="bg-brand-50/60 border border-brand-200 rounded-2xl p-4 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h5 class="font-bold text-xs text-brand-900 flex items-center gap-1.5">
+                            <i class="fa-solid fa-map-location-dot text-brand-600 text-sm"></i> 地図アプリ（Googleマップ）でルートを開く
+                        </h5>
+                        <span class="text-[11px] text-brand-700 font-medium">徒歩ルート案内（往復周回）に対応</span>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        下のボタンを押すと、スマホのGoogleマップアプリが直接起動し、<strong>「出発地点 ➔ 経由スポット ➔ 出発地点」</strong>の周回徒歩ルートが描画されます。
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-2 pt-1">
+                        <a id="gmap-direct-link" href="#" target="_blank" rel="noopener noreferrer" onclick="handleMapLinkClick(event)" class="flex-1 py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-center text-xs shadow-sm transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-diamond-turn-right"></i> Googleマップで散歩コースを開く
+                        </a>
+                        <button type="button" onclick="copyMapUrl()" class="px-4 py-3 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5" title="URLをコピー">
+                            <i class="fa-solid fa-copy"></i> ルートURLをコピー
+                        </button>
+                    </div>
+                    <div class="pt-1">
+                        <input type="text" id="gmap-url-preview" readonly placeholder="コースを作成するとここにマップURLが表示されます" class="w-full px-3 py-2 bg-white rounded-xl border border-slate-200 text-[11px] text-slate-500 select-all">
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // ==========================================
+        // 1. 初期状態・データ定義
+        // ==========================================
+        let userProfile = {
+            gender: '男性',
+            height: 174,
+            weight: 77.0,
+            target: 72.0
+        };
+
+        let startPoint = '';
+
+        const defaultSpots = [
+            { id: 1, name: '近所の大きな公園', category: '公園・緑地', distance: 10 },
+            { id: 2, name: '川沿いの遊歩道', category: '水辺・川沿い', distance: 15 },
+            { id: 3, name: '駅前のカフェ・コンビニ', category: 'お店・カフェ', distance: 5 },
+            { id: 4, name: '地元の神社', category: '神社・史跡', distance: 10 }
+        ];
+
+        let spots = [];
+
+        try {
+            const savedProfile = localStorage.getItem('fitstep_profile');
+            if (savedProfile) userProfile = { ...userProfile, ...JSON.parse(savedProfile) };
+            const savedStart = localStorage.getItem('fitstep_start_point');
+            if (savedStart) startPoint = savedStart;
+            const savedSpots = localStorage.getItem('fitstep_spots');
+            if (savedSpots) {
+                const parsedSpots = JSON.parse(savedSpots);
+                if (Array.isArray(parsedSpots) && parsedSpots.length > 0) {
+                    spots = parsedSpots;
+                }
+            }
+        } catch (e) {
+            console.warn('LocalStorage read error:', e);
+        }
+
+        const workoutDatabase = [
+            {
+                id: 'w1',
+                name: '仰向けドローイン（腹式呼吸）',
+                level: ['beginner', 'light', 'active'],
+                duration: '2分（30秒×3セット）',
+                mets: 2.0,
+                kneeLoad: false,
+                jump: false,
+                desc: '仰向けに寝て膝を立て、息を吐きながらお腹をへこませます。腰に負担なく体幹を起こします。'
+            },
+            {
+                id: 'w2',
+                name: '肩甲骨まわし＆胸開きストレッチ',
+                level: ['beginner', 'light'],
+                duration: '2分（前後各10回×2）',
+                mets: 2.3,
+                kneeLoad: false,
+                jump: false,
+                desc: '指先を肩に置き、肘で大きな円を描きます。デスクワーク等で固まった背中の褐色脂肪細胞を刺激します。'
+            },
+            {
+                id: 'w3',
+                name: '椅子を使ったハーフスクワット',
+                level: ['beginner', 'light'],
+                duration: '3分（10回×2セット）',
+                mets: 3.5,
+                kneeLoad: false,
+                jump: false,
+                desc: '後ろに椅子を置き、お尻が座面に軽く触れたら立ち上がります。膝がつま先より前に出ないよう意識します。'
+            },
+            {
+                id: 'w4',
+                name: 'かかとの上げ下げ（カーフレイズ）',
+                level: ['beginner', 'light', 'active'],
+                duration: '2分（15回×2セット）',
+                mets: 2.8,
+                kneeLoad: false,
+                jump: false,
+                desc: '壁や椅子の背に手を添えて、ゆっくりかかとを上げ下げします。ふくらはぎのポンプ機能で血流を改善します。'
+            },
+            {
+                id: 'w5',
+                name: '四つん這いバードドッグ',
+                level: ['light', 'active'],
+                duration: '3分（左右各8回×2）',
+                mets: 3.2,
+                kneeLoad: false,
+                jump: false,
+                desc: '四つん這いから右手と左足を水平に伸ばして3秒キープ。体幹と背筋・お尻を同時に鍛えます。'
+            },
+            {
+                id: 'w6',
+                name: 'その場ニートゥエルボー（立ち腹筋）',
+                level: ['light', 'active'],
+                duration: '3分（30秒×3セット）',
+                mets: 4.0,
+                kneeLoad: false,
+                jump: false,
+                desc: '立ったまま右肘と左膝を近づけるように体をひねります。ジャンプなしで心拍数を程よく上げます。'
+            },
+            {
+                id: 'w7',
+                name: 'ワイドスクワット（内もも・お尻）',
+                level: ['active'],
+                duration: '4分（12回×3セット）',
+                mets: 5.0,
+                kneeLoad: true,
+                jump: false,
+                desc: '足を肩幅より広く開き、つま先を外側に向けて腰を下ろします。下半身の大きな筋肉で効率よく消費します。'
+            },
+            {
+                id: 'w8',
+                name: '膝つきプッシュアップ（腕立て伏せ）',
+                level: ['light', 'active'],
+                duration: '3分（10回×2セット）',
+                mets: 3.8,
+                kneeLoad: false,
+                jump: false,
+                desc: '床に膝をついた状態で腕立て伏せを行います。胸と二の腕を引き締め、基礎代謝を高めます。'
+            },
+            {
+                id: 'w9',
+                name: 'スロー・マウンテンクライマー',
+                level: ['active'],
+                duration: '3分（30秒×3セット）',
+                mets: 5.5,
+                kneeLoad: false,
+                jump: false,
+                desc: '腕立ての姿勢から、片膝ずつゆっくり胸に引き寄せます。足音を立てずに全身の脂肪燃焼を狙います。'
+            },
+            {
+                id: 'w10',
+                name: 'ジャンピングジャック（有酸素）',
+                level: ['active'],
+                duration: '3分（30秒×3セット）',
+                mets: 6.5,
+                kneeLoad: true,
+                jump: true,
+                desc: '手足を同時に開閉しながら軽くジャンプします。短時間でしっかり汗をかける有酸素運動です。'
+            }
+        ];
+
+        // ==========================================
+        // 2. タブ切り替え・UI制御
+        // ==========================================
+        function switchTab(tabName) {
+            const homeSec = document.getElementById('section-home');
+            const walkSec = document.getElementById('section-walk');
+            const homeBtn = document.getElementById('tab-btn-home');
+            const walkBtn = document.getElementById('tab-btn-walk');
+
+            if (tabName === 'home') {
+                homeSec.classList.remove('hidden');
+                walkSec.classList.add('hidden');
+                homeBtn.className = 'flex-1 py-3 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 bg-white text-brand-700 shadow-sm transition border border-brand-200';
+                walkBtn.className = 'flex-1 py-3 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900 transition border border-transparent';
+            } else {
+                homeSec.classList.add('hidden');
+                walkSec.classList.remove('hidden');
+                walkBtn.className = 'flex-1 py-3 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 bg-white text-brand-700 shadow-sm transition border border-brand-200';
+                homeBtn.className = 'flex-1 py-3 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900 transition border border-transparent';
+            }
+        }
+
+        // ==========================================
+        // 3. プロフィール管理・BMI計算
+        // ==========================================
+        function toggleProfileEdit() {
+            const box = document.getElementById('profile-edit-box');
+            box.classList.toggle('hidden');
+            if (!box.classList.contains('hidden')) {
+                document.getElementById('input-gender').value = userProfile.gender || '男性';
+                document.getElementById('input-height').value = userProfile.height;
+                document.getElementById('input-weight').value = userProfile.weight;
+                document.getElementById('input-target').value = userProfile.target;
+            }
+        }
+
+        function saveProfile() {
+            const g = document.getElementById('input-gender').value;
+            const h = parseFloat(document.getElementById('input-height').value);
+            const w = parseFloat(document.getElementById('input-weight').value);
+            const t = parseFloat(document.getElementById('input-target').value);
+
+            if (!h || !w || !t || h < 100 || w < 20) {
+                showToast('正しい数値を入力してください', true);
+                return;
+            }
+
+            userProfile = { gender: g, height: h, weight: w, target: t };
+            try {
+                localStorage.setItem('fitstep_profile', JSON.stringify(userProfile));
+            } catch (e) {}
+
+            updateProfileDisplay();
+            generateHomeWorkout();
+            generateWalkCourse();
+            document.getElementById('profile-edit-box').classList.add('hidden');
+            showToast('パーソナル設定を更新しました');
+        }
+
+        function updateProfileDisplay() {
+            const gEl = document.getElementById('disp-gender');
+            const hEl = document.getElementById('disp-height');
+            const wEl = document.getElementById('disp-weight');
+            const tEl = document.getElementById('disp-target');
+
+            if (gEl) gEl.textContent = userProfile.gender || '男性';
+            if (hEl) hEl.textContent = userProfile.height;
+            if (wEl) wEl.textContent = userProfile.weight.toFixed(1);
+            if (tEl) tEl.textContent = userProfile.target.toFixed(1);
+
+            const heightM = userProfile.height / 100;
+            const bmi = userProfile.weight / (heightM * heightM);
+            const bmiEl = document.getElementById('disp-bmi');
+            const statusEl = document.getElementById('disp-bmi-status');
+
+            if (bmiEl) bmiEl.textContent = bmi.toFixed(1);
+            
+            if (statusEl) {
+                if (bmi < 18.5) {
+                    if (bmiEl) bmiEl.className = 'font-bold text-sm sm:text-base text-blue-600';
+                    statusEl.textContent = '低体重（無理なく体力づくり）';
+                } else if (bmi < 25.0) {
+                    if (bmiEl) bmiEl.className = 'font-bold text-sm sm:text-base text-brand-800';
+                    statusEl.textContent = '標準範囲内（引き締め目標）';
+                } else {
+                    if (bmiEl) bmiEl.className = 'font-bold text-sm sm:text-base text-amber-600';
+                    const upperStandard = 24.9 * heightM * heightM;
+                    const toNormal = Math.max(0.1, userProfile.weight - upperStandard);
+                    statusEl.textContent = `標準まであと -${toNormal.toFixed(1)}kg`;
+                }
+            }
+        }
+
+        // ==========================================
+        // 4. 自宅運動メニュー自動生成
+        // ==========================================
+        function generateHomeWorkout() {
+            const levelRadio = document.querySelector('input[name="workout-level"]:checked');
+            const level = levelRadio ? levelRadio.value : 'beginner';
+            const noKnee = document.getElementById('opt-no-knee').checked;
+            const noJump = document.getElementById('opt-no-jump').checked;
+
+            let filtered = workoutDatabase.filter(item => {
+                if (!item.level.includes(level)) return false;
+                if (noKnee && item.kneeLoad) return false;
+                if (noJump && item.jump) return false;
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                filtered = workoutDatabase.slice(0, 4);
+            }
+
+            const count = level === 'beginner' ? 4 : (level === 'light' ? 5 : 6);
+            const selected = shuffleArray(filtered).slice(0, count);
+
+            const totalMin = level === 'beginner' ? 10 : (level === 'light' ? 15 : 20);
+            const avgMets = selected.reduce((sum, item) => sum + item.mets, 0) / selected.length;
+            const estKcal = Math.round(avgMets * userProfile.weight * (totalMin / 60) * 1.05);
+
+            const titles = {
+                beginner: 'Lv.1 運動再開・ほぐし＆基礎代謝メニュー',
+                light: 'Lv.2 慣らし脂肪燃焼・大きな筋肉刺激メニュー',
+                active: 'Lv.3 しっかり引き締め・全身代謝アップメニュー'
+            };
+
+            const titleEl = document.getElementById('workout-title');
+            const timeEl = document.getElementById('workout-time');
+            const kcalEl = document.getElementById('workout-kcal');
+
+            if (titleEl) titleEl.textContent = titles[level];
+            if (timeEl) timeEl.textContent = totalMin;
+            if (kcalEl) kcalEl.textContent = estKcal;
+
+            const listEl = document.getElementById('workout-list');
+            if (!listEl) return;
+            listEl.innerHTML = '';
+
+            selected.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'p-4 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-white transition flex flex-col sm:flex-row sm:items-center justify-between gap-3';
+                card.innerHTML = `
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-full bg-brand-600 text-white text-xs font-bold flex items-center justify-center shrink-0">${index + 1}</span>
+                            <h5 class="font-bold text-sm text-slate-800">${item.name}</h5>
+                        </div>
+                        <p class="text-xs text-slate-600 leading-relaxed pl-8">${item.desc}</p>
+                    </div>
+                    <div class="pl-8 sm:pl-0 shrink-0">
+                        <span class="inline-block text-xs font-bold text-brand-700 bg-brand-50 border border-brand-200 px-3 py-1.5 rounded-lg">${item.duration}</span>
+                    </div>
+                `;
+                listEl.appendChild(card);
+            });
+        }
+
+        // ==========================================
+        // 5. エクササイズタイマー
+        // ==========================================
+        let timerInterval = null;
+        let remainingSeconds = 30;
+
+        function updateTimerDisplay() {
+            const mins = String(Math.floor(remainingSeconds / 60)).padStart(2, '0');
+            const secs = String(remainingSeconds % 60).padStart(2, '0');
+            const display = document.getElementById('timer-display');
+            if (display) display.textContent = `${mins}:${secs}`;
+        }
+
+        function startTimer(seconds) {
+            clearInterval(timerInterval);
+            remainingSeconds = seconds;
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                remainingSeconds--;
+                updateTimerDisplay();
+                if (remainingSeconds <= 0) {
+                    clearInterval(timerInterval);
+                    showToast('タイマー終了！お疲れさまでした！');
+                }
+            }, 1000);
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            remainingSeconds = 30;
+            updateTimerDisplay();
+        }
+
+        // ==========================================
+        // 6. 出発地点の保存・表示
+        // ==========================================
+        function saveStartPoint() {
+            const input = document.getElementById('start-point-input');
+            if (!input) return;
+            const val = input.value.trim();
+            startPoint = val;
+            try {
+                localStorage.setItem('fitstep_start_point', startPoint);
+            } catch (e) {}
+            updateStartPointDisplay();
+            generateWalkCourse();
+            showToast(startPoint ? `出発地点「${startPoint}」を保存しました` : '出発地点をクリアしました');
+        }
+
+        function updateStartPointDisplay() {
+            const input = document.getElementById('start-point-input');
+            const disp = document.getElementById('disp-start-point');
+            if (input) input.value = startPoint;
+            if (disp) {
+                disp.textContent = startPoint
+                    ? startPoint
+                    : '未設定（設定するとルート案内が正確になります）';
+            }
+        }
+
+        // ==========================================
+        // 7. 散歩スポットの登録・削除・表示
+        // ==========================================
+        function saveSpots() {
+            try {
+                localStorage.setItem('fitstep_spots', JSON.stringify(spots));
+            } catch (e) {}
+        }
+
+        function addSpot() {
+            const nameInput = document.getElementById('spot-name');
+            const categorySelect = document.getElementById('spot-category');
+            const distanceSelect = document.getElementById('spot-distance');
+
+            if (!nameInput) return;
+            const name = nameInput.value.trim();
+            if (!name) {
+                showToast('地点名を入力してください', true);
+                return;
+            }
+
+            spots.push({
+                id: Date.now(),
+                name: name,
+                category: categorySelect.value,
+                distance: parseInt(distanceSelect.value, 10)
+            });
+
+            nameInput.value = '';
+            saveSpots();
+            renderSpotList();
+            generateWalkCourse();
+            showToast(`「${name}」を登録しました`);
+        }
+
+        function removeSpot(id) {
+            spots = spots.filter(s => s.id !== id);
+            saveSpots();
+            renderSpotList();
+            generateWalkCourse();
+            showToast('地点を削除しました');
+        }
+
+        function resetDefaultSpots() {
+            spots = [...defaultSpots];
+            saveSpots();
+            renderSpotList();
+            generateWalkCourse();
+            showToast('サンプル地点を復元しました');
+        }
+
+        function renderSpotList() {
+            const listEl = document.getElementById('spot-list');
+            const countEl = document.getElementById('spot-count');
+            if (!listEl || !countEl) return;
+
+            countEl.textContent = spots.length;
+            listEl.innerHTML = '';
+
+            if (spots.length === 0) {
+                listEl.innerHTML = '<p class="text-xs text-slate-400 py-2">まだ地点が登録されていません。上のフォームから追加してください。</p>';
+                return;
+            }
+
+            spots.forEach(spot => {
+                const tag = document.createElement('div');
+                tag.className = 'inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200/70 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-medium border border-slate-200 transition';
+                tag.innerHTML = `
+                    <span class="font-bold text-slate-800">${spot.name}</span>
+                    <span class="text-[11px] text-slate-500">(${spot.category} / 片道${spot.distance}分)</span>
+                    <button type="button" onclick="removeSpot(${spot.id})" class="text-slate-400 hover:text-rose-500 ml-1 p-0.5" title="削除">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                `;
+                listEl.appendChild(tag);
+            });
+        }
+
+        // ==========================================
+        // 8. 散歩コース自動作成ロジック
+        // ==========================================
+        function generateWalkCourse() {
+            if (spots.length === 0) {
+                showToast('散歩地点を1つ以上登録してください', true);
+                return;
+            }
+
+            const targetDurationEl = document.getElementById('walk-duration-target');
+            const moodEl = document.getElementById('walk-mood');
+            if (!targetDurationEl || !moodEl) return;
+
+            const targetDuration = parseInt(targetDurationEl.value, 10);
+            const mood = moodEl.value;
+
+            let preferredPool = [...spots];
+            if (mood === 'relax') {
+                const filtered = spots.filter(s => s.category.includes('公園') || s.category.includes('水辺') || s.category.includes('神社'));
+                if (filtered.length > 0) preferredPool = filtered;
+            } else if (mood === 'reward') {
+                const filtered = spots.filter(s => s.category.includes('お店') || s.category.includes('公園'));
+                if (filtered.length > 0) preferredPool = filtered;
+            } else if (mood === 'burn') {
+                const filtered = spots.filter(s => s.category.includes('坂道') || s.distance >= 10);
+                if (filtered.length > 0) preferredPool = filtered;
+            }
+
+            let candidateCombos = [];
+            const searchPool = shuffleArray(preferredPool);
+            const allPool = shuffleArray(spots);
+
+            searchPool.forEach(s1 => {
+                const total = s1.distance * 2;
+                candidateCombos.push({
+                    spots: [s1],
+                    estTime: total,
+                    diff: Math.abs(targetDuration - total)
+                });
+            });
+
+            for (let i = 0; i < searchPool.length; i++) {
+                for (let j = 0; j < allPool.length; j++) {
+                    if (searchPool[i].id === allPool[j].id) continue;
+                    const total = Math.round((searchPool[i].distance + allPool[j].distance) * 1.35);
+                    candidateCombos.push({
+                        spots: [searchPool[i], allPool[j]],
+                        estTime: total,
+                        diff: Math.abs(targetDuration - total)
+                    });
+                }
+            }
+
+            if (targetDuration >= 40 && allPool.length >= 3) {
+                for (let i = 0; i < Math.min(searchPool.length, 4); i++) {
+                    const others = allPool.filter(s => s.id !== searchPool[i].id);
+                    if (others.length >= 2) {
+                        const combo = [searchPool[i], others[0], others[1]];
+                        const total = Math.round((combo[0].distance + combo[1].distance + combo[2].distance) * 1.2);
+                        candidateCombos.push({
+                            spots: combo,
+                            estTime: total,
+                            diff: Math.abs(targetDuration - total)
+                        });
+                    }
+                }
+            }
+
+            candidateCombos.sort((a, b) => a.diff - b.diff);
+            const bestDiff = candidateCombos[0].diff;
+            const topCombos = candidateCombos.filter(c => c.diff <= bestDiff + 3);
+            const chosen = topCombos[Math.floor(Math.random() * topCombos.length)];
+
+            const routeSpots = chosen.spots;
+            const rawEstTime = chosen.estTime;
+            const displayTime = Math.abs(rawEstTime - targetDuration) <= 5 ? targetDuration : rawEstTime;
+
+            let paceNote = '通常の快適なペース';
+            let turnaroundAdvice = '';
+            let mets = 3.3;
+
+            if (mood === 'burn') {
+                paceNote = '少し大股・早歩きペース';
+                mets = 4.0;
+            }
+
+            if (rawEstTime > targetDuration + 5) {
+                const turnMin = Math.floor(targetDuration / 2);
+                turnaroundAdvice = `（※地点まで少し距離があるため、出発から${turnMin}分経過した地点で折り返すとちょうど${targetDuration}分で戻れます）`;
+            } else if (rawEstTime < targetDuration - 5) {
+                const extraMin = targetDuration - rawEstTime;
+                turnaroundAdvice = `（※少し余裕があるコースなので、途中で${extraMin}分ほどゆっくり景色を眺めるとちょうど${targetDuration}分になります）`;
+            } else {
+                turnaroundAdvice = `（出発地点から戻ってくるまで、ほぼ${targetDuration}分ぴったりで完歩できる黄金バランスです！）`;
+            }
+
+            const estSteps = displayTime * 100;
+            const estKcal = Math.round(mets * userProfile.weight * (displayTime / 60) * 1.05);
+
+            const courseTitles = {
+                any: `出発地点へ戻る！${displayTime}分完歩おまかせ周回コース`,
+                relax: `自然を満喫して戻る！のんびり${displayTime}分完歩コース`,
+                reward: `立ち寄り楽しみ周回！${displayTime}分完歩リフレッシュコース`,
+                burn: `脂肪燃焼スイッチON！しっかり${displayTime}分完歩コース`
+            };
+
+            const courseTitleEl = document.getElementById('walk-course-title');
+            const totalMinEl = document.getElementById('walk-total-min');
+            const totalStepsEl = document.getElementById('walk-total-steps');
+            const totalKcalEl = document.getElementById('walk-total-kcal');
+
+            if (courseTitleEl) courseTitleEl.textContent = courseTitles[mood];
+            if (totalMinEl) totalMinEl.textContent = displayTime;
+            if (totalStepsEl) totalStepsEl.textContent = estSteps.toLocaleString();
+            if (totalKcalEl) totalKcalEl.textContent = estKcal;
+
+            const timelineEl = document.getElementById('walk-timeline');
+            if (!timelineEl) return;
+            timelineEl.innerHTML = '';
+
+            const originLabel = startPoint ? `出発地点（${startPoint}）` : '登録した出発地点';
+
+            timelineEl.appendChild(createTimelineNode(
+                'START (0分)',
+                `${originLabel}を出発`,
+                `コップ1杯の水を飲んでスタート。${turnaroundAdvice}`,
+                'bg-slate-800 text-white'
+            ));
+
+            let elapsedMin = 0;
+            routeSpots.forEach((spot, idx) => {
+                elapsedMin += (idx === 0) ? spot.distance : Math.max(5, Math.round(spot.distance * 0.7));
+                let spotAction = '深呼吸をして景色を楽しみながら通過しましょう。';
+                if (spot.category.includes('公園')) spotAction = '公園のベンチで軽くふくらはぎを伸ばすのもおすすめです。';
+                if (spot.category.includes('お店')) spotAction = '水分補給にお水やお茶を買うのもOK！（甘い飲み物は控えめに）';
+                if (spot.category.includes('坂道')) spotAction = '歩幅を少し小さくして、腕を後ろに振ると楽に登れます。';
+
+                timelineEl.appendChild(createTimelineNode(
+                    `経由地 ${idx + 1}（約${elapsedMin}分地点）`,
+                    `${spot.name}（${spot.category}）`,
+                    `出発地点から片道約${spot.distance}分圏内。${spotAction}`,
+                    'bg-brand-600 text-white'
+                ));
+            });
+
+            timelineEl.appendChild(createTimelineNode(
+                `GOAL（約${displayTime}分完歩）`,
+                `${originLabel}に到着・完歩！`,
+                `出発地点へ無事帰還！合計約${displayTime}分（${paceNote} / 約${estSteps.toLocaleString()}歩）のウォーキング達成です。`,
+                'bg-rose-500 text-white'
+            ));
+
+            let mapUrl = 'https://www.google.com/maps';
+            if (startPoint) {
+                const originEncoded = encodeURIComponent(startPoint);
+                const waypointsEncoded = routeSpots.map(s => encodeURIComponent(s.name)).join('|');
+                mapUrl = `https://www.google.com/maps/dir/?api=1&origin=${originEncoded}&destination=${originEncoded}&waypoints=${waypointsEncoded}&travelmode=walking`;
+            } else {
+                const destinationEncoded = encodeURIComponent(routeSpots[routeSpots.length - 1].name);
+                if (routeSpots.length > 1) {
+                    const waypointsEncoded = routeSpots.slice(0, -1).map(s => encodeURIComponent(s.name)).join('|');
+                    mapUrl = `https://www.google.com/maps/dir/?api=1&destination=${destinationEncoded}&waypoints=${waypointsEncoded}&travelmode=walking`;
+                } else {
+                    mapUrl = `https://www.google.com/maps/dir/?api=1&destination=${destinationEncoded}&travelmode=walking`;
+                }
+            }
+            window.currentMapUrl = mapUrl;
+            const linkEl = document.getElementById('gmap-direct-link');
+            const previewInput = document.getElementById('gmap-url-preview');
+            if (linkEl) linkEl.href = mapUrl;
+            if (previewInput) previewInput.value = mapUrl;
+        }
+
+        function handleMapLinkClick(e) {
+            const url = window.currentMapUrl;
+            if (!url) {
+                e.preventDefault();
+                showToast('先に「散歩コースを自動作成する」を押してください', true);
+                return;
+            }
+            copyTextToClipboard(url, 'Googleマップを開きます（開かない場合はコピー済みのURLを貼り付けてください）');
+        }
+
+        function copyMapUrl() {
+            const url = window.currentMapUrl;
+            if (!url) return;
+            copyTextToClipboard(url, 'GoogleマップのルートURLをコピーしました！ブラウザや地図アプリに貼り付けて開けます');
+        }
+
+        function createTimelineNode(badgeText, title, desc, badgeClass) {
+            const div = document.createElement('div');
+            div.className = 'relative';
+            div.innerHTML = `
+                <span class="absolute -left-[33px] top-0.5 w-4 h-4 rounded-full bg-white border-4 border-brand-500"></span>
+                <div class="flex flex-wrap items-center gap-2 mb-1">
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded ${badgeClass}">${badgeText}</span>
+                    <h5 class="font-bold text-sm text-slate-800">${title}</h5>
+                </div>
+                <p class="text-xs text-slate-600 leading-relaxed">${desc}</p>
+            `;
+            return div;
+        }
+
+        function shuffleArray(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // ==========================================
+        // 9. 通知トースト・URLコピー・データ保存・初期化
+        // ==========================================
+        let toastTimeout = null;
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            const msg = document.getElementById('toast-message');
+            if (!toast || !icon || !msg) return;
+
+            msg.textContent = message;
+            icon.className = isError
+                ? 'fa-solid fa-circle-exclamation text-rose-400 text-lg'
+                : 'fa-solid fa-circle-check text-brand-500 text-lg';
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3200);
+        }
+
+        function copyTextToClipboard(text, successMessage) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast(successMessage);
+            } catch (err) {
+                showToast('コピーに失敗しました', true);
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function openShareModal() {
+            const modal = document.getElementById('share-modal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeShareModal() {
+            const modal = document.getElementById('share-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function openInstallModal() {
+            const modal = document.getElementById('install-modal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeInstallModal() {
+            const modal = document.getElementById('install-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function copySpotsShareText() {
+            if (!spots || spots.length === 0) {
+                showToast('コピーする散歩スポットがありません', true);
+                return;
+            }
+            const sharePayload = JSON.stringify(spots.map(s => ({
+                name: s.name,
+                category: s.category,
+                distance: s.distance
+            })));
+            copyTextToClipboard(sharePayload, '散歩スポット一覧をコピーしました！LINE等でお友達に送れます');
+        }
+
+        function importSpotsFromText() {
+            const input = document.getElementById('import-spots-input');
+            if (!input || !input.value.trim()) {
+                showToast('お友達から送られたテキストを貼り付けてください', true);
+                return;
+            }
+            try {
+                const parsed = JSON.parse(input.value.trim());
+                if (!Array.isArray(parsed)) throw new Error('Invalid format');
+                let addedCount = 0;
+                parsed.forEach((item, idx) => {
+                    if (item && item.name) {
+                        spots.push({
+                            id: Date.now() + idx,
+                            name: String(item.name),
+                            category: item.category || '公園・緑地',
+                            distance: parseInt(item.distance, 10) || 10
+                        });
+                        addedCount++;
+                    }
+                });
+                if (addedCount > 0) {
+                    saveSpots();
+                    renderSpotList();
+                    generateWalkCourse();
+                    input.value = '';
+                    closeShareModal();
+                    showToast(`${addedCount}件の散歩スポットを取り込みました！`);
+                } else {
+                    showToast('有効なスポットデータが見つかりませんでした', true);
+                }
+            } catch (err) {
+                showToast('データの形式が正しくありません。コピーした全文を貼り付けてください', true);
+            }
+        }
+
+        window.onload = function() {
+            if (!spots || spots.length === 0) {
+                spots = [...defaultSpots];
+            }
+            updateProfileDisplay();
+            updateStartPointDisplay();
+            renderSpotList();
+            generateHomeWorkout();
+            generateWalkCourse();
+        };
+    </script>
+</body>
+</html>
