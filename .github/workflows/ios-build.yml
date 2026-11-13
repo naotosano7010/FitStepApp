@@ -50,7 +50,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: FitStep-iOS-IPA
-          path: FitStep-unsigned.ipaname: Build Unsigned iOS IPA
+          path: FitStep-unsigned.ipa
 
 on:
   push:
