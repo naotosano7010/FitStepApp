@@ -1,0 +1,12 @@
+{
+  "appId": "com.fitstep.dietwalk",
+  "appName": "FitStep",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  },
+  "ios": {
+    "contentInset": "automatic"
+  }
+}
