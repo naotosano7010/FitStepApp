@@ -1,0 +1,16 @@
+{
+  "name": "fitstep-app",
+  "version": "1.0.0",
+  "description": "FitStep - 無理なく続くダイエット＆散歩コース自動作成アプリ",
+  "private": true,
+  "scripts": {
+    "cap:sync": "npx cap sync ios"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/ios": "^6.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0"
+  }
+}
