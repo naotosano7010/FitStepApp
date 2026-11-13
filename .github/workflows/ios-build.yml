@@ -29,9 +29,14 @@ jobs:
           fi
           npx cap sync ios
 
+      - name: 4.5. CocoaPods のインストールと更新
+        run: |
+          cd ios/App
+          pod install
+
       - name: 5. Xcode による無署名ビルド (.xcarchive)
         run: |
-          xcodebuild -project ios/App/App.xcodeproj \
+          xcodebuild -workspace ios/App/App.xcworkspace \
             -scheme App \
             -sdk iphoneos \
             -configuration Release \
